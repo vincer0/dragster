@@ -42,6 +42,10 @@ const TicketList = (): JSX.Element => {
 
     const [mappedTickets, setMappedTickets] = useState(ticketsOrder.map((ticketId, index) => tickets[ticketId]));
 
+    const [nextTickets, setNextTickets] = useState(mappedTickets.filter((ticket, index) => {
+        return index !== 0;
+    }))
+
     const [currentTicket, setCurrentTicket] = useState(mappedTickets[0]);
 
     const [isDragging, setIsDragging] = useState(false);
@@ -53,7 +57,6 @@ const TicketList = (): JSX.Element => {
         const newTicketsOrder = [...ticketsOrder];
         mappedTickets.forEach((ticket, index) => newTicketsOrder[index] = ticket.id);
         setTicketsOrder(newTicketsOrder);
-        setCurrentTicket(mappedTickets[0]);
     }
 
     const handleOnDragOver  = (event: React.DragEvent<HTMLDivElement>) => {
@@ -66,6 +69,26 @@ const TicketList = (): JSX.Element => {
         console.log("drop")
         event.preventDefault();
         setIsOver(false);
+
+        const oldCurrentTicket = currentTicket;
+
+        const newTicketsOrder = [...ticketsOrder];
+        const newNextTickets = [...nextTickets];
+        // TODO get grabbed element position from next tickets...
+        const newDraggableIndex = event.newDraggableIndex;
+        console.log("newDraggableIndex", newDraggableIndex)
+        if(newDraggableIndex !== undefined) {
+            const draggedTicket = newNextTickets[newDraggableIndex];
+            console.log(draggedTicket)
+            //TODO current ticket is grabbed element
+            setCurrentTicket(draggedTicket);
+            // splice draggedTicket from nextTicket
+            newNextTickets.splice(newDraggableIndex, 1, oldCurrentTicket);
+            //TODO set old current ticket to grabbed element position
+
+            // TODO setNextTickets(newNextTickets)
+            setNextTickets(newNextTickets);
+        }
     }
 
     return (
