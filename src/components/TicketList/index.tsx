@@ -1,49 +1,94 @@
 import React, { useState } from 'react'
+import { ReactSortable, Sortable } from "react-sortablejs";
 /** @jsx jsx */
 import { jsx } from '@emotion/core'
 
 import styles from './styles';
 import TicketListItem from '../TicketListItem';
+import Ticket from '../../models/Ticket';
 
 const TicketList = (): JSX.Element => {
-    const [tickets, setTickets] = useState([
+    const [tickets, setTickets] = useState<Ticket[]>([
         {
-            id: 1,
+            id: 0,
             summary: 'Lorem ipsum dolor sit amet.',
             description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis, necessitatibus?',
         },
         {
-            id: 2,
+            id: 1,
             summary: 'adipisicing elit. Blanditiis, necessitatibus?',
             description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.'
         },
         {
-            id: 3,
+            id: 2,
             summary: 'Blanditiis, necessitatibus?',
             description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.'
         },
         {
-            id: 4,
+            id: 3,
             summary: 'Blanditiis, necessitatibus? Lorem ipsum',
             description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
             estimation: 5,
         },
         {
-            id: 5,
+            id: 4,
             summary: 'Blanditiis, necessitatibus? dolor sit amet consectetur',
             description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
             estimation: 8,
         }
     ])
 
-    const [currentTicket, setCurrentTicket] = useState(tickets[0]);
+    const [ticketsOrder, setTicketsOrder] = useState([4, 3, 1, 2, 0]);
+
+    const [mappedTickets, setMappedTickets] = useState(ticketsOrder.map((ticketId, index) => tickets[ticketId]));
+
+    const [currentTicket, setCurrentTicket] = useState(mappedTickets[0]);
+
+    const [isDragging, setIsDragging] = useState(false);
+    const [isOver, setIsOver] = useState(false);
+
+    const handleOnEnd = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
+        setIsDragging(false);
+        setIsOver(false);
+        const newTicketsOrder = [...ticketsOrder];
+        mappedTickets.forEach((ticket, index) => newTicketsOrder[index] = ticket.id);
+        setTicketsOrder(newTicketsOrder);
+        setCurrentTicket(mappedTickets[0]);
+    }
+
+    const handleOnDragOver  = (event: React.DragEvent<HTMLDivElement>) => {
+        console.log("over")
+        event.preventDefault();
+        setIsOver(true);
+    }
+
+    const handleOnDrop = (event: React.DragEvent<HTMLDivElement>) => {
+        console.log("drop")
+        event.preventDefault();
+        setIsOver(false);
+    }
+
     return (
         <div css={styles}>
             <div className="current">
                 <div className="title">{`Current: `}</div>
-                <TicketListItem ticket={currentTicket} key={currentTicket.id}></TicketListItem>
+                {isDragging ? <div 
+                    onDrop={handleOnDrop} 
+                    onDragOver={handleOnDragOver}
+                    onDragLeave={() => setIsOver(false)} 
+                    className="can-set-current"
+                    style={isOver ? {
+                        borderColor: 'white',
+                        backgroundColor: '#6F767A'
+                    } : undefined}
+                >{`Drag here to set as current`}
+                </div> : 
+                <TicketListItem ticket={currentTicket} key={currentTicket.id}></TicketListItem>}
             </div>
-            { tickets.map(ticket => <TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>) }
+            <div className="next title">{`Next (${tickets.length})`}</div>
+            <ReactSortable list={mappedTickets} setList={setMappedTickets} ghostClass="item-placeholder" onStart={() => setIsDragging(true)} onEnd={handleOnEnd}>
+                {mappedTickets.map((ticket, index) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
+            </ReactSortable>
         </div>
     )
 }

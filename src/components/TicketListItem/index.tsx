@@ -11,7 +11,7 @@ interface Props {
 const TicketListItem = ({ticket}: Props) => {
     return (
         <div css={styles}>
-            <div className="summary">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quidem, perspiciatis?</div>
+            <div className="summary">{ticket.summary}</div>
             {ticket.estimation && <div className="estimation">{`Estimation: ${ticket.estimation}`}</div>}
         </div>
     )
