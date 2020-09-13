@@ -3,11 +3,12 @@ import React from 'react'
 import { jsx } from '@emotion/core'
 
 import styles from './styles';
+import TicketList from '../TicketList';
 
 const Drawer = () => {
     return (
-        <div css={styles}>
-            
+        <div css={styles}> 
+            <TicketList></TicketList>
         </div>
     )
 }
