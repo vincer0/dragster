@@ -54,6 +54,8 @@ const TicketList = (): JSX.Element => {
     const handleOnEnd = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
         setIsDragging(false);
         setIsOver(false);
+        const oldCurrentTicket = currentTicket;
+
         const newTicketsOrder = [...ticketsOrder];
         mappedTickets.forEach((ticket, index) => newTicketsOrder[index] = ticket.id);
         setTicketsOrder(newTicketsOrder);
@@ -108,9 +110,9 @@ const TicketList = (): JSX.Element => {
                 </div> : 
                 <TicketListItem ticket={currentTicket} key={currentTicket.id}></TicketListItem>}
             </div>
-            <div className="next title">{`Next (${tickets.length})`}</div>
-            <ReactSortable list={mappedTickets} setList={setMappedTickets} ghostClass="item-placeholder" onStart={() => setIsDragging(true)} onEnd={handleOnEnd}>
-                {mappedTickets.map((ticket, index) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
+            <div className="title">{`Next (${nextTickets.length})`}</div>
+            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={() => setIsDragging(true)} onEnd={handleOnEnd}>
+                {nextTickets.map((ticket, index) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
             </ReactSortable>
         </div>
     )
