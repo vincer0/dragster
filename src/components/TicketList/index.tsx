@@ -8,7 +8,7 @@ import TicketListItem from '../TicketListItem';
 import Ticket from '../../models/Ticket';
 
 const TicketList = (): JSX.Element => {
-    const [tickets, setTickets] = useState<Ticket[]>([
+    const [tickets] = useState<Ticket[]>([
         {
             id: 0,
             summary: 'Lorem ipsum dolor sit amet.',
@@ -39,22 +39,35 @@ const TicketList = (): JSX.Element => {
     ])
 
     const [ticketsOrder, setTicketsOrder] = useState([4, 3, 1, 2, 0]);
-
-    const [mappedTickets, setMappedTickets] = useState(ticketsOrder.map((ticketId, index) => tickets[ticketId]));
-
+    const [mappedTickets, ] = useState(ticketsOrder.map((ticketId, index) => tickets[ticketId]));
     const [nextTickets, setNextTickets] = useState(mappedTickets.filter((ticket, index) => {
         return index !== 0;
     }))
-
-    const [currentTicket, setCurrentTicket] = useState(mappedTickets[0]);
-
+    const [currentTicket, setCurrentTicket] = useState<Array<Ticket>>([mappedTickets[0]]);
     const [isDragging, setIsDragging] = useState(false);
     const [isOver, setIsOver] = useState(false);
+    const [draggedTicket, setDraggedTicket] = useState<Ticket>();
+
+    const handleOnStart = (event: Sortable.SortableEvent) => {
+        event.preventDefault();
+        setIsDragging(true);
+
+        console.log(event)
+
+        const oldDraggableIndex = event.oldDraggableIndex;
+
+        if(oldDraggableIndex !== undefined) {
+            const dragged = nextTickets.find((ticket, index) => {
+                return index === oldDraggableIndex;
+            })
+            setDraggedTicket(dragged);
+        }
+    }
 
     const handleOnEnd = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
         setIsDragging(false);
         setIsOver(false);
-        const oldCurrentTicket = currentTicket;
+        //const oldCurrentTicket = currentTicket;
 
         const newTicketsOrder = [...ticketsOrder];
         mappedTickets.forEach((ticket, index) => newTicketsOrder[index] = ticket.id);
@@ -67,28 +80,24 @@ const TicketList = (): JSX.Element => {
         setIsOver(true);
     }
 
-    const handleOnDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        console.log("drop")
+    const handleOnDrop = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
+        console.log("drop", event)
         event.preventDefault();
         setIsOver(false);
 
-        const oldCurrentTicket = currentTicket;
+        const oldCurrentTicket = currentTicket[0];
 
         const newTicketsOrder = [...ticketsOrder];
         const newNextTickets = [...nextTickets];
         // TODO get grabbed element position from next tickets...
-        const newDraggableIndex = event.newDraggableIndex;
-        console.log("newDraggableIndex", newDraggableIndex)
-        if(newDraggableIndex !== undefined) {
-            const draggedTicket = newNextTickets[newDraggableIndex];
-            console.log(draggedTicket)
-            //TODO current ticket is grabbed element
-            setCurrentTicket(draggedTicket);
+        //TODO current ticket is grabbed element
+        if(draggedTicket) {
+            const newDraggedTicket: Array<Ticket> = [];
+            newDraggedTicket.push(draggedTicket);
+            setCurrentTicket(newDraggedTicket);
             // splice draggedTicket from nextTicket
-            newNextTickets.splice(newDraggableIndex, 1, oldCurrentTicket);
-            //TODO set old current ticket to grabbed element position
-
-            // TODO setNextTickets(newNextTickets)
+            const indexOfDragged = newNextTickets.indexOf(draggedTicket);
+            newNextTickets.splice(indexOfDragged, 1, oldCurrentTicket);
             setNextTickets(newNextTickets);
         }
     }
@@ -98,7 +107,6 @@ const TicketList = (): JSX.Element => {
             <div className="current">
                 <div className="title">{`Current: `}</div>
                 {isDragging ? <div 
-                    onDrop={handleOnDrop} 
                     onDragOver={handleOnDragOver}
                     onDragLeave={() => setIsOver(false)} 
                     className="can-set-current"
@@ -108,10 +116,13 @@ const TicketList = (): JSX.Element => {
                     } : undefined}
                 >{`Drag here to set as current`}
                 </div> : 
-                <TicketListItem ticket={currentTicket} key={currentTicket.id}></TicketListItem>}
+                    <ReactSortable list={currentTicket} setList={setCurrentTicket} disabled onAdd={handleOnDrop}>
+                        {currentTicket.map((ticket) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
+                    </ReactSortable>
+                }
             </div>
             <div className="title">{`Next (${nextTickets.length})`}</div>
-            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={() => setIsDragging(true)} onEnd={handleOnEnd}>
+            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={handleOnStart} onEnd={handleOnEnd}>
                 {nextTickets.map((ticket, index) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
             </ReactSortable>
         </div>
