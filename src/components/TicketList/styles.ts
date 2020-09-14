@@ -31,4 +31,8 @@ export default (): SerializedStyles => css`
     border: 1px solid #adb8be;
     border-radius: 4px;
 }
+
+.current-placeholder {
+    display: none;
+}
 `;

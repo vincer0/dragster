@@ -52,8 +52,6 @@ const TicketList = (): JSX.Element => {
         event.preventDefault();
         setIsDragging(true);
 
-        console.log(event)
-
         const oldDraggableIndex = event.oldDraggableIndex;
 
         if(oldDraggableIndex !== undefined) {
@@ -64,14 +62,21 @@ const TicketList = (): JSX.Element => {
         }
     }
 
-    const handleOnEnd = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
+    const handleOnEnd = () => {
         setIsDragging(false);
         setIsOver(false);
-        //const oldCurrentTicket = currentTicket;
-
-        const newTicketsOrder = [...ticketsOrder];
-        mappedTickets.forEach((ticket, index) => newTicketsOrder[index] = ticket.id);
-        setTicketsOrder(newTicketsOrder);
+        const newNextTickets = [...nextTickets];
+        const newCurrentTicket = [...currentTicket];
+        //get old current
+        const oldCurrentTicket = currentTicket[0];
+        //slice from current tickets
+        newCurrentTicket.splice(0, 1);
+        //unshift to nextTickets
+        newNextTickets.unshift(oldCurrentTicket);
+        //set newNextTickets && newCurrentTicket
+        setCurrentTicket(newCurrentTicket);
+        setNextTickets(newNextTickets);
+        
     }
 
     const handleOnDragOver  = (event: React.DragEvent<HTMLDivElement>) => {
@@ -80,50 +85,29 @@ const TicketList = (): JSX.Element => {
         setIsOver(true);
     }
 
-    const handleOnDrop = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
-        console.log("drop", event)
-        event.preventDefault();
-        setIsOver(false);
-
-        const oldCurrentTicket = currentTicket[0];
-
-        const newTicketsOrder = [...ticketsOrder];
-        const newNextTickets = [...nextTickets];
-        // TODO get grabbed element position from next tickets...
-        //TODO current ticket is grabbed element
-        if(draggedTicket) {
-            const newDraggedTicket: Array<Ticket> = [];
-            newDraggedTicket.push(draggedTicket);
-            setCurrentTicket(newDraggedTicket);
-            // splice draggedTicket from nextTicket
-            const indexOfDragged = newNextTickets.indexOf(draggedTicket);
-            newNextTickets.splice(indexOfDragged, 1, oldCurrentTicket);
-            setNextTickets(newNextTickets);
-        }
-    }
-
     return (
         <div css={styles}>
             <div className="current">
                 <div className="title">{`Current: `}</div>
-                {isDragging ? <div 
-                    onDragOver={handleOnDragOver}
-                    onDragLeave={() => setIsOver(false)} 
-                    className="can-set-current"
-                    style={isOver ? {
-                        borderColor: 'white',
-                        backgroundColor: '#6F767A'
-                    } : undefined}
-                >{`Drag here to set as current`}
-                </div> : 
-                    <ReactSortable list={currentTicket} setList={setCurrentTicket} disabled onAdd={handleOnDrop}>
-                        {currentTicket.map((ticket) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
-                    </ReactSortable>
-                }
+                <ReactSortable list={currentTicket} setList={setCurrentTicket} onStart={handleOnStart} ghostClass="current-placeholder" group="shared">
+                    {currentTicket.map((ticket) => (isDragging ? 
+                    <div
+                        key={ticket.id}
+                        onDragOver={handleOnDragOver}
+                        onDragLeave={() => setIsOver(false)} 
+                        className="can-set-current"
+                        style={isOver ? {
+                            borderColor: 'white',
+                            backgroundColor: '#6F767A'
+                        } : undefined}
+                    >{`Drag here to set as current`}
+                    </div> : 
+                    <TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
+                </ReactSortable>
             </div>
             <div className="title">{`Next (${nextTickets.length})`}</div>
-            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={handleOnStart} onEnd={handleOnEnd}>
-                {nextTickets.map((ticket, index) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
+            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={handleOnStart} onEnd={handleOnEnd} group="shared">
+                {nextTickets.map((ticket) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
             </ReactSortable>
         </div>
     )
