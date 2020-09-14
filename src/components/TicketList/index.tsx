@@ -8,7 +8,7 @@ import TicketListItem from '../TicketListItem';
 import Ticket from '../../models/Ticket';
 
 const TicketList = (): JSX.Element => {
-    const [tickets, setTickets] = useState<Ticket[]>([
+    const [tickets,] = useState<Ticket[]>([
         {
             id: 0,
             summary: 'Lorem ipsum dolor sit amet.',
@@ -38,27 +38,29 @@ const TicketList = (): JSX.Element => {
         }
     ])
 
-    const [ticketsOrder, setTicketsOrder] = useState([4, 3, 1, 2, 0]);
-
-    const [mappedTickets, setMappedTickets] = useState(ticketsOrder.map((ticketId, index) => tickets[ticketId]));
-
-    const [nextTickets, setNextTickets] = useState(mappedTickets.filter((ticket, index) => {
+    const [ticketsOrder,] = useState([4, 3, 1, 2, 0]);
+    const [mappedTickets,] = useState(ticketsOrder.map((ticketId) => tickets[ticketId]));
+    const [nextTickets, setNextTickets] = useState(mappedTickets.filter((_,index) => {
         return index !== 0;
     }))
-
     const [currentTicket, setCurrentTicket] = useState(mappedTickets[0]);
-
     const [isDragging, setIsDragging] = useState(false);
     const [isOver, setIsOver] = useState(false);
+    const [draggedTicket, setDraggedTicket] = useState<Ticket>();
 
-    const handleOnEnd = (event: Sortable.SortableEvent, sortable: Sortable | null) => {
+    const handleOnStart = (event: Sortable.SortableEvent) => {
+        setIsDragging(true);
+        const draggedIndex = event.oldDraggableIndex;
+        if(draggedIndex !== undefined) {
+            setDraggedTicket(nextTickets[draggedIndex]);
+        }
+    }
+
+    const handleOnEnd = () => {
         setIsDragging(false);
         setIsOver(false);
-        const oldCurrentTicket = currentTicket;
 
-        const newTicketsOrder = [...ticketsOrder];
-        mappedTickets.forEach((ticket, index) => newTicketsOrder[index] = ticket.id);
-        setTicketsOrder(newTicketsOrder);
+        // TODO set new ticket order!!
     }
 
     const handleOnDragOver  = (event: React.DragEvent<HTMLDivElement>) => {
@@ -73,22 +75,13 @@ const TicketList = (): JSX.Element => {
         setIsOver(false);
 
         const oldCurrentTicket = currentTicket;
-
-        const newTicketsOrder = [...ticketsOrder];
         const newNextTickets = [...nextTickets];
-        // TODO get grabbed element position from next tickets...
-        const newDraggableIndex = event.newDraggableIndex;
-        console.log("newDraggableIndex", newDraggableIndex)
-        if(newDraggableIndex !== undefined) {
-            const draggedTicket = newNextTickets[newDraggableIndex];
-            console.log(draggedTicket)
-            //TODO current ticket is grabbed element
-            setCurrentTicket(draggedTicket);
-            // splice draggedTicket from nextTicket
-            newNextTickets.splice(newDraggableIndex, 1, oldCurrentTicket);
-            //TODO set old current ticket to grabbed element position
 
-            // TODO setNextTickets(newNextTickets)
+        if(draggedTicket) {
+            const indexOfDragged = nextTickets.indexOf(draggedTicket);
+            newNextTickets.splice(indexOfDragged, 1);
+            newNextTickets.unshift(oldCurrentTicket);
+            setCurrentTicket(draggedTicket);
             setNextTickets(newNextTickets);
         }
     }
@@ -111,8 +104,8 @@ const TicketList = (): JSX.Element => {
                 <TicketListItem ticket={currentTicket} key={currentTicket.id}></TicketListItem>}
             </div>
             <div className="title">{`Next (${nextTickets.length})`}</div>
-            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={() => setIsDragging(true)} onEnd={handleOnEnd}>
-                {nextTickets.map((ticket, index) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
+            <ReactSortable list={nextTickets} setList={setNextTickets} ghostClass="item-placeholder" onStart={handleOnStart} onEnd={handleOnEnd}>
+                {nextTickets.map((ticket) => (<TicketListItem ticket={ticket} key={ticket.id}></TicketListItem>))}
             </ReactSortable>
         </div>
     )
